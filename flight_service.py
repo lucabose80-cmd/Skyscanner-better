@@ -1,107 +1,99 @@
 import os
 import requests
 from datetime import datetime
-import json
 
-# KIWI TEQUILA API
-API_KEY = os.getenv("TEQUILA_API_KEY", "")
-API_URL = "https://api.tequila.kiwi.com/v2/search"
+# SERPAPI GOOGLE FLIGHTS API
+API_KEY = "b8c69aab0426c2ad85e2cd5a37f3e20ce8ac362a0777a030a3bc460207130ab2"
+API_URL = "https://serpapi.com/search.json"
 
-def search_flights(origin, destination, date_from, date_to, return_from=None, return_to=None):
-    if not API_KEY:
-        # Return mock data if no API key is provided
-        return get_mock_data(origin, destination, date_from)
-
-    headers = {
-        "apikey": API_KEY
-    }
+def search_flights(origin, destination, date_from, date_to=None, return_from=None, return_to=None):
+    # Hilfsfunktion für Datumskonvertierung von DD/MM/YYYY zu YYYY-MM-DD
+    def to_iso(d):
+        if not d: return None
+        parts = d.split('/')
+        if len(parts) == 3:
+            return f"{parts[2]}-{parts[1]}-{parts[0]}"
+        return d
+        
+    outbound = to_iso(date_from)
     
     params = {
-        "fly_from": origin,
-        "fly_to": destination,
-        "date_from": date_from,
-        "date_to": date_to,
-        "max_stopovers": 2,
-        "curr": "EUR",
-        "sort": "price"
+        "engine": "google_flights",
+        "api_key": API_KEY,
+        "departure_id": origin,
+        "arrival_id": destination,
+        "outbound_date": outbound,
+        "currency": "EUR",
+        "hl": "de"
     }
 
-    if return_from and return_to:
-        params["return_from"] = return_from
-        params["return_to"] = return_to
-        params["flight_type"] = "round"
+    if return_from:
+        params["return_date"] = to_iso(return_from)
+        params["type"] = "1" # Hin- und Rückflug
     else:
-        params["flight_type"] = "oneway"
+        params["type"] = "2" # Nur Hinflug
 
-    response = requests.get(API_URL, headers=headers, params=params)
+    response = requests.get(API_URL, params=params)
     response.raise_for_status()
     data = response.json()
     
-    # Filter logic: Filter out layovers >= 4 hours
     valid_flights = []
-    for flight in data.get("data", []):
+    # SerpApi teilt die Flüge in "Best" und "Other" auf
+    flights_list = data.get("best_flights", []) + data.get("other_flights", [])
+    
+    for flight in flights_list:
         if is_flight_valid(flight):
-            valid_flights.append(format_flight(flight))
+            deep_link = data.get("search_metadata", {}).get("google_flights_url", "https://www.google.com/flights")
+            valid_flights.append(format_flight(flight, deep_link))
             
+    # Nach Preis sortieren
+    valid_flights.sort(key=lambda x: x["price"] if x["price"] else float('inf'))
     return valid_flights
 
 def is_flight_valid(flight):
     """
-    Check if the flight has normal times, e.g., layovers < 4 hours.
-    Kiwi provides 'route' which is an array of flight segments.
-    We check the time difference between arrival of one and departure of the next.
+    Prüft ob die Layovers unter 4 Stunden (240 Minuten) liegen.
     """
-    route = flight.get("route", [])
-    if len(route) <= 1:
-        return True # Direct flight
-        
-    # Check layovers
-    for i in range(len(route) - 1):
-        arrival_time = datetime.fromtimestamp(route[i]["aTimeUTC"])
-        departure_time = datetime.fromtimestamp(route[i+1]["dTimeUTC"])
-        layover_duration = (departure_time - arrival_time).total_seconds() / 3600
-        
-        if layover_duration >= 4.0:
+    layovers = flight.get("layovers", [])
+    for layover in layovers:
+        duration = layover.get("duration", 0)
+        if duration >= 240:
             return False
-            
     return True
 
-def format_flight(flight):
-    # Extract only relevant information for the frontend
-    return {
-        "id": flight.get("id"),
-        "price": flight.get("price"),
-        "currency": "EUR",
-        "deep_link": flight.get("deep_link"),
-        "duration": flight.get("fly_duration"),
-        "departure": datetime.fromtimestamp(flight.get("dTimeUTC")).strftime('%Y-%m-%d %H:%M'),
-        "arrival": datetime.fromtimestamp(flight.get("aTimeUTC")).strftime('%Y-%m-%d %H:%M'),
-        "route": [f"{r['flyFrom']} -> {r['flyTo']} ({r['airline']})" for r in flight.get("route", [])],
-        "layovers": len(flight.get("route", [])) - 1
-    }
+def format_flight(flight, deep_link):
+    flights_segments = flight.get("flights", [])
+    
+    departure = ""
+    arrival = ""
+    route = []
+    
+    if flights_segments:
+        dep_info = flights_segments[0].get("departure_airport", {})
+        departure = dep_info.get("time", "")
+        
+        arr_info = flights_segments[-1].get("arrival_airport", {})
+        arrival = arr_info.get("time", "")
+        
+        for seg in flights_segments:
+            dep_id = seg.get("departure_airport", {}).get("id", "Unbekannt")
+            arr_id = seg.get("arrival_airport", {}).get("id", "Unbekannt")
+            airline = seg.get("airline", "Unbekannt")
+            route.append(f"{dep_id} -> {arr_id} ({airline})")
+            
+    total_minutes = flight.get("total_duration", 0)
+    h = total_minutes // 60
+    m = total_minutes % 60
+    duration_str = f"{h}h {m}m"
 
-def get_mock_data(origin, destination, date_from):
-    return [
-        {
-            "id": "mock-1",
-            "price": 145,
-            "currency": "EUR",
-            "deep_link": "#",
-            "duration": "2h 15m",
-            "departure": f"{date_from[-4:]}-{date_from[3:5]}-{date_from[:2]} 08:30",
-            "arrival": f"{date_from[-4:]}-{date_from[3:5]}-{date_from[:2]} 10:45",
-            "route": [f"{origin} -> {destination} (LH)"],
-            "layovers": 0
-        },
-        {
-            "id": "mock-2",
-            "price": 110,
-            "currency": "EUR",
-            "deep_link": "#",
-            "duration": "5h 30m",
-            "departure": f"{date_from[-4:]}-{date_from[3:5]}-{date_from[:2]} 14:00",
-            "arrival": f"{date_from[-4:]}-{date_from[3:5]}-{date_from[:2]} 19:30",
-            "route": [f"{origin} -> MUC (LH)", f"MUC -> {destination} (LH)"],
-            "layovers": 1
-        }
-    ]
+    return {
+        "id": flight.get("flight_ticket", "google-flight"),
+        "price": flight.get("price", 0),
+        "currency": "EUR",
+        "deep_link": deep_link,
+        "duration": duration_str,
+        "departure": departure,
+        "arrival": arrival,
+        "route": route,
+        "layovers": len(flight.get("layovers", []))
+    }

@@ -14,7 +14,7 @@ def search_flights(
     origin: str = Query(..., description="Origin City Code (e.g., FRA)"),
     destination: str = Query(..., description="Destination City Code (e.g., JFK)"),
     date_from: str = Query(..., description="Start date (DD/MM/YYYY)"),
-    date_to: str = Query(..., description="End date (DD/MM/YYYY)"),
+    date_to: str = Query(None, description="End date (DD/MM/YYYY)"),
     return_from: str = Query(None, description="Return start date (DD/MM/YYYY)"),
     return_to: str = Query(None, description="Return end date (DD/MM/YYYY)")
 ):

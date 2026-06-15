@@ -9,11 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.checked) {
             returnDates.classList.remove('hidden');
             document.getElementById('return_from').required = true;
-            document.getElementById('return_to').required = true;
         } else {
             returnDates.classList.add('hidden');
             document.getElementById('return_from').required = false;
-            document.getElementById('return_to').required = false;
         }
     });
 
@@ -33,14 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const origin = document.getElementById('origin').value.toUpperCase();
         const destination = document.getElementById('destination').value.toUpperCase();
         const dateFrom = formatDate(document.getElementById('date_from').value);
-        const dateTo = formatDate(document.getElementById('date_to').value);
         
-        let url = `/api/search?origin=${origin}&destination=${destination}&date_from=${dateFrom}&date_to=${dateTo}`;
+        let url = `/api/search?origin=${origin}&destination=${destination}&date_from=${dateFrom}`;
         
         if (isRoundtrip.checked) {
             const returnFrom = formatDate(document.getElementById('return_from').value);
-            const returnTo = formatDate(document.getElementById('return_to').value);
-            url += `&return_from=${returnFrom}&return_to=${returnTo}`;
+            url += `&return_from=${returnFrom}`;
         }
 
         try {
