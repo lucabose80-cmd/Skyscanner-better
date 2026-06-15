@@ -15,6 +15,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Autocomplete Logic
+    function setupAutocomplete(inputId, suggestionsId) {
+        const input = document.getElementById(inputId);
+        const box = document.getElementById(suggestionsId);
+        let timeout = null;
+
+        input.addEventListener('input', (e) => {
+            clearTimeout(timeout);
+            const query = e.target.value.trim();
+            
+            if (query.length < 2) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            timeout = setTimeout(async () => {
+                try {
+                    // Wir nutzen eine kostenlose offene API für Flughäfen, um keine SerpApi Credits zu verbrauchen!
+                    const res = await fetch(`https://autocomplete.travelpayouts.com/places2?term=${query}&locale=de&types[]=city,airport`);
+                    const data = await res.json();
+                    
+                    if (data.length > 0) {
+                        box.innerHTML = '';
+                        data.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.innerHTML = `<span class="suggestion-name">${item.name}</span> <span class="suggestion-code">${item.code}</span>`;
+                            div.addEventListener('click', () => {
+                                input.value = item.code; // Setze den Code (z.B. FRA) ein, den die API braucht
+                                box.classList.add('hidden');
+                            });
+                            box.appendChild(div);
+                        });
+                        box.classList.remove('hidden');
+                    } else {
+                        box.classList.add('hidden');
+                    }
+                } catch (err) {
+                    console.error("Autocomplete error", err);
+                }
+            }, 300);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target !== input && !box.contains(e.target)) {
+                box.classList.add('hidden');
+            }
+        });
+    }
+
+    setupAutocomplete('origin', 'origin-suggestions');
+    setupAutocomplete('destination', 'destination-suggestions');
+
     // Helper to format date YYYY-MM-DD to DD/MM/YYYY
     const formatDate = (dateString) => {
         if (!dateString) return null;

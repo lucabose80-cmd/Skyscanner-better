@@ -17,13 +17,15 @@
         <main>
             <section class="search-box glass">
                 <form id="search-form">
-                    <div class="form-group">
-                        <label for="origin">Von (IATA, z.B. FRA)</label>
-                        <input type="text" id="origin" name="origin" placeholder="FRA" required>
+                    <div class="form-group" style="position: relative;">
+                        <label for="origin">Von (Stadt oder Code)</label>
+                        <input type="text" id="origin" name="origin" placeholder="z.B. Frankfurt" autocomplete="off" required>
+                        <div id="origin-suggestions" class="suggestions-box hidden"></div>
                     </div>
-                    <div class="form-group">
-                        <label for="destination">Nach (IATA, z.B. JFK)</label>
-                        <input type="text" id="destination" name="destination" placeholder="JFK" required>
+                    <div class="form-group" style="position: relative;">
+                        <label for="destination">Nach (Stadt oder Code)</label>
+                        <input type="text" id="destination" name="destination" placeholder="z.B. Rom" autocomplete="off" required>
+                        <div id="destination-suggestions" class="suggestions-box hidden"></div>
                     </div>
                     <div class="form-group">
                         <label for="date_from">Hinflug Datum</label>
