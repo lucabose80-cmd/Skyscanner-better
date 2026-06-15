@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
             timeout = setTimeout(async () => {
                 try {
                     // Wir nutzen eine kostenlose offene API für Flughäfen, um keine SerpApi Credits zu verbrauchen!
-                    const res = await fetch(`https://autocomplete.travelpayouts.com/places2?term=${query}&locale=de&types[]=city,airport`);
+                    // Nur types[]=airport, da Google Flights mit Stadt-Codes wie "ROM" oft nichts anfangen kann.
+                    const res = await fetch(`https://autocomplete.travelpayouts.com/places2?term=${query}&locale=de&types[]=airport`);
                     const data = await res.json();
                     
                     if (data.length > 0) {
