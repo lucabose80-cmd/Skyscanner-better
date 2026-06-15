@@ -1,19 +1,13 @@
+import os
+from pathlib import Path
 from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 import flight_service
-import os
 
 app = FastAPI(title="Flight Tracker API")
 
-# Serve the frontend
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-def read_root():
-    # redirect to /static/index.html
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/static/index.html")
+BASE_DIR = Path(__file__).resolve().parent
 
 @app.get("/api/search")
 def search_flights(
@@ -31,3 +25,7 @@ def search_flights(
         return JSONResponse(content={"status": "success", "data": results})
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+
+# Statische Dateien (Frontend) direkt auf der Haupt-URL ("/") einbinden.
+# WICHTIG: Dies muss nach allen @app.get Routen stehen!
+app.mount("/", StaticFiles(directory=str(BASE_DIR / "static"), html=True), name="static")
