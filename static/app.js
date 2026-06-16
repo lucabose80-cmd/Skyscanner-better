@@ -1,57 +1,45 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('search-form');
-    const isRoundtrip = document.getElementById('is_roundtrip');
-    const returnDates = document.getElementById('return-dates');
+    const earliestStartInput = document.getElementById('earliest_start');
+    const latestReturnInput = document.getElementById('latest_return');
+    const destContainer = document.getElementById('destinations-container');
+    const addDestBtn = document.getElementById('add-dest-btn');
     const resultsContainer = document.getElementById('results');
     const loader = document.getElementById('loader');
 
-    isRoundtrip.addEventListener('change', (e) => {
-        if (e.target.checked) {
-            returnDates.classList.remove('hidden');
-            document.getElementById('return_from').required = true;
-        } else {
-            returnDates.classList.add('hidden');
-            document.getElementById('return_from').required = false;
-        }
-    });
-
     // Autocomplete Logic
-    function setupAutocomplete(inputId, suggestionsId) {
-        const input = document.getElementById(inputId);
-        const box = document.getElementById(suggestionsId);
+    function setupAutocomplete(inputElement, suggestionsElement) {
         let timeout = null;
 
-        input.addEventListener('input', (e) => {
+        inputElement.addEventListener('input', (e) => {
             clearTimeout(timeout);
             const query = e.target.value.trim();
             
             if (query.length < 2) {
-                box.classList.add('hidden');
+                suggestionsElement.classList.add('hidden');
                 return;
             }
 
             timeout = setTimeout(async () => {
                 try {
-                    // Wir nutzen eine kostenlose offene API für Flughäfen, um keine SerpApi Credits zu verbrauchen!
-                    // Nur types[]=airport, da Google Flights mit Stadt-Codes wie "ROM" oft nichts anfangen kann.
                     const res = await fetch(`https://autocomplete.travelpayouts.com/places2?term=${query}&locale=de&types[]=airport`);
                     const data = await res.json();
                     
                     if (data.length > 0) {
-                        box.innerHTML = '';
+                        suggestionsElement.innerHTML = '';
                         data.forEach(item => {
                             const div = document.createElement('div');
                             div.className = 'suggestion-item';
                             div.innerHTML = `<span class="suggestion-name">${item.name}</span> <span class="suggestion-code">${item.code}</span>`;
                             div.addEventListener('click', () => {
-                                input.value = item.code; // Setze den Code (z.B. FRA) ein, den die API braucht
-                                box.classList.add('hidden');
+                                inputElement.value = item.code;
+                                suggestionsElement.classList.add('hidden');
                             });
-                            box.appendChild(div);
+                            suggestionsElement.appendChild(div);
                         });
-                        box.classList.remove('hidden');
+                        suggestionsElement.classList.remove('hidden');
                     } else {
-                        box.classList.add('hidden');
+                        suggestionsElement.classList.add('hidden');
                     }
                 } catch (err) {
                     console.error("Autocomplete error", err);
@@ -60,88 +48,155 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.addEventListener('click', (e) => {
-            if (e.target !== input && !box.contains(e.target)) {
-                box.classList.add('hidden');
+            if (e.target !== inputElement && !suggestionsElement.contains(e.target)) {
+                suggestionsElement.classList.add('hidden');
             }
         });
     }
 
-    setupAutocomplete('origin', 'origin-suggestions');
-    setupAutocomplete('destination', 'destination-suggestions');
+    // Initialize static autocomplete
+    setupAutocomplete(document.getElementById('start_airport'), document.getElementById('start-suggestions'));
+    setupAutocomplete(document.getElementById('end_airport'), document.getElementById('end-suggestions'));
 
-    // Helper to format date YYYY-MM-DD to DD/MM/YYYY
-    const formatDate = (dateString) => {
-        if (!dateString) return null;
-        const [year, month, day] = dateString.split('-');
-        return `${day}/${month}/${year}`;
-    };
+    // Date validation
+    earliestStartInput.addEventListener('change', () => {
+        latestReturnInput.min = earliestStartInput.value;
+        if (latestReturnInput.value && latestReturnInput.value < earliestStartInput.value) {
+            latestReturnInput.value = earliestStartInput.value;
+        }
+    });
+
+    let destCount = 0;
+
+    function addDestination() {
+        destCount++;
+        const row = document.createElement('div');
+        row.className = 'destination-row';
+        row.innerHTML = `
+            <h4>Zwischenstopp ${destCount}</h4>
+            <button type="button" class="remove-btn">Entfernen</button>
+            <div class="form-group" style="position: relative;">
+                <label>Nach (Flughafen-Code)</label>
+                <input type="text" class="dest-airport" placeholder="z.B. ROM" autocomplete="off" required>
+                <div class="suggestions-box hidden"></div>
+            </div>
+            <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+                <div class="form-group">
+                    <label>Min. Aufenthalt (Tage)</label>
+                    <input type="number" class="dest-min" min="1" value="3" required>
+                </div>
+                <div class="form-group">
+                    <label>Max. Aufenthalt (Tage)</label>
+                    <input type="number" class="dest-max" min="1" value="6" required>
+                </div>
+            </div>
+        `;
+
+        destContainer.appendChild(row);
+
+        // Setup autocomplete for this new input
+        const input = row.querySelector('.dest-airport');
+        const box = row.querySelector('.suggestions-box');
+        setupAutocomplete(input, box);
+
+        // Setup remove button
+        row.querySelector('.remove-btn').addEventListener('click', () => {
+            row.remove();
+        });
+    }
+
+    // Add one default destination
+    addDestination();
+
+    addDestBtn.addEventListener('click', addDestination);
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        // Gather data
+        const earliest_start = earliestStartInput.value;
+        const latest_return = latestReturnInput.value;
+        const start_airport = document.getElementById('start_airport').value;
+        const end_airport = document.getElementById('end_airport').value || "";
+
+        const destinations = [];
+        document.querySelectorAll('.destination-row').forEach(row => {
+            destinations.push({
+                airport: row.querySelector('.dest-airport').value,
+                min_days: parseInt(row.querySelector('.dest-min').value),
+                max_days: parseInt(row.querySelector('.dest-max').value)
+            });
+        });
+
+        const requestData = {
+            earliest_start,
+            latest_return,
+            start_airport,
+            end_airport,
+            destinations
+        };
+
         resultsContainer.innerHTML = '';
+        form.style.display = 'none';
         loader.classList.remove('hidden');
 
-        const origin = document.getElementById('origin').value.toUpperCase();
-        const destination = document.getElementById('destination').value.toUpperCase();
-        const dateFrom = formatDate(document.getElementById('date_from').value);
-        
-        let url = `/api/search?origin=${origin}&destination=${destination}&date_from=${dateFrom}`;
-        
-        if (isRoundtrip.checked) {
-            const returnFrom = formatDate(document.getElementById('return_from').value);
-            url += `&return_from=${returnFrom}`;
-        }
-
         try {
-            const response = await fetch(url);
+            const response = await fetch('/api/smart-search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData)
+            });
             const data = await response.json();
             
             loader.classList.add('hidden');
-            
-            if (data.status === 'success') {
-                renderResults(data.data);
+            form.style.display = 'block';
+
+            if (data.status === 'success' && data.data.length > 0) {
+                data.data.forEach(flight => {
+                    const card = document.createElement('div');
+                    card.className = 'flight-card glass';
+                    
+                    let layoversHtml = '';
+                    if (flight.layovers > 0) {
+                        layoversHtml = `<div class="flight-detail"><strong>Layovers:</strong> ${flight.layovers}</div>`;
+                    } else {
+                        layoversHtml = `<div class="flight-detail" style="color: #4ade80;"><strong>Direktflüge!</strong></div>`;
+                    }
+
+                    const routeHtml = flight.route.map((r, i) => `<div>Leg ${i+1}: ${r}</div>`).join('');
+
+                    card.innerHTML = `
+                        <div class="flight-header">
+                            <div class="flight-price">${flight.price} ${flight.currency}</div>
+                            <a href="${flight.deep_link}" target="_blank" class="book-btn">Prüfen</a>
+                        </div>
+                        <div style="color:var(--primary-color); margin-bottom:1rem; font-weight:600; font-size:0.9rem;">
+                            ${flight.date_summary}
+                        </div>
+                        <div class="flight-details">
+                            <div class="flight-detail">
+                                <strong>Start:</strong> ${flight.departure}
+                            </div>
+                            <div class="flight-detail">
+                                <strong>Ende:</strong> ${flight.arrival}
+                            </div>
+                            <div class="flight-detail">
+                                <strong>Route:</strong>
+                                ${routeHtml}
+                            </div>
+                            ${layoversHtml}
+                        </div>
+                    `;
+                    resultsContainer.appendChild(card);
+                });
             } else {
-                resultsContainer.innerHTML = `<p style="color: #ef4444; text-align: center;">Fehler bei der Suche: ${data.message}</p>`;
+                resultsContainer.innerHTML = '<p style="text-align: center;">Keine guten Kombinationen mit passenden Kriterien gefunden.</p>';
             }
         } catch (error) {
+            console.error(error);
             loader.classList.add('hidden');
-            resultsContainer.innerHTML = `<p style="color: #ef4444; text-align: center;">Ein Netzwerkfehler ist aufgetreten.</p>`;
+            form.style.display = 'block';
+            resultsContainer.innerHTML = '<p style="text-align: center; color: #ef4444;">Fehler bei der Suche.</p>';
         }
     });
-
-    function renderResults(flights) {
-        if (!flights || flights.length === 0) {
-            resultsContainer.innerHTML = `<p style="text-align: center; color: #cbd5e1;">Keine Flüge mit passenden Kriterien gefunden.</p>`;
-            return;
-        }
-
-        const isMockData = flights[0].id && flights[0].id.startsWith('mock');
-        let html = '';
-        
-        if (isMockData) {
-            html += `<div class="glass" style="margin-bottom: 1rem; border-color: #f59e0b; padding: 1rem; text-align: center;">
-                        <span style="color: #fbbf24;">⚠️ API Key nicht gesetzt. Zeige Mock-Daten an.</span>
-                     </div>`;
-        }
-
-        flights.forEach(flight => {
-            const routeStr = flight.route.join('<br>');
-            html += `
-                <div class="flight-card">
-                    <div class="flight-info">
-                        <h3>Abflug: ${flight.departure} | Ankunft: ${flight.arrival}</h3>
-                        <p><strong>Dauer:</strong> ${flight.duration} | <strong>Stopps:</strong> ${flight.layovers}</p>
-                        <p style="margin-top: 0.5rem; font-size: 0.85rem;">${routeStr}</p>
-                    </div>
-                    <div class="flight-price">
-                        <span class="amount">${flight.price} ${flight.currency}</span>
-                        <a href="${flight.deep_link}" target="_blank" class="book-btn">Buchen</a>
-                    </div>
-                </div>
-            `;
-        });
-
-        resultsContainer.innerHTML = html;
-    }
 });

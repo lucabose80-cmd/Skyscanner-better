@@ -3,62 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Urlaubs-Flug-Suche</title>
+    <title>Skyscanner Better - Smart Flight Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-container">
+    <div class="background-animation"></div>
+    
+    <div class="container">
         <header>
-            <h1>✈️ SkyFinder</h1>
-            <p>Finde die besten Flüge ohne ewig zu suchen.</p>
+            <h1>✈️ Skyscanner <span class="highlight">Better</span></h1>
+            <p>Finde die besten Flugtage ohne ewig zu suchen.</p>
         </header>
 
         <main>
             <section class="search-box glass">
                 <form id="search-form">
-                    <div class="form-group" style="position: relative;">
-                        <label for="origin">Von (Stadt oder Code)</label>
-                        <input type="text" id="origin" name="origin" placeholder="z.B. Frankfurt" autocomplete="off" required>
-                        <div id="origin-suggestions" class="suggestions-box hidden"></div>
-                    </div>
-                    <div class="form-group" style="position: relative;">
-                        <label for="destination">Nach (Stadt oder Code)</label>
-                        <input type="text" id="destination" name="destination" placeholder="z.B. Rom" autocomplete="off" required>
-                        <div id="destination-suggestions" class="suggestions-box hidden"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="date_from">Hinflug Datum</label>
-                        <input type="date" id="date_from" name="date_from" required>
-                    </div>
                     
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="is_roundtrip" name="is_roundtrip">
-                        <label for="is_roundtrip">Hin- und Rückflug</label>
-                    </div>
-
-                    <div id="return-dates" class="hidden">
-                        <div class="form-group">
-                            <label for="return_from">Rückflug Datum</label>
-                            <input type="date" id="return_from" name="return_from">
+                    <div style="display:flex; gap:1rem;">
+                        <div class="form-group" style="flex:1">
+                            <label for="earliest_start">Frühester Abflug</label>
+                            <input type="date" id="earliest_start" required>
+                        </div>
+                        <div class="form-group" style="flex:1">
+                            <label for="latest_return">Spätester Rückflug / Ende</label>
+                            <input type="date" id="latest_return" required>
                         </div>
                     </div>
 
-                    <button type="submit" class="primary-btn">Flüge suchen</button>
+                    <div class="form-group" style="position: relative;">
+                        <label for="start_airport">Startflughafen</label>
+                        <input type="text" id="start_airport" placeholder="z.B. FRA" autocomplete="off" required>
+                        <div id="start-suggestions" class="suggestions-box hidden"></div>
+                    </div>
+
+                    <div id="destinations-container">
+                        <!-- Zwischenziele werden hier per JS eingefügt -->
+                    </div>
+
+                    <button type="button" id="add-dest-btn" class="outline-btn">+ Weiteres Ziel hinzufügen</button>
+
+                    <div class="form-group" style="position: relative; margin-top: 1rem;">
+                        <label for="end_airport">Endflughafen (Rückflug nach)</label>
+                        <input type="text" id="end_airport" placeholder="z.B. FRA (leer lassen für One-Way)" autocomplete="off">
+                        <div id="end-suggestions" class="suggestions-box hidden"></div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" style="margin-top: 1.5rem;">Beste Tage finden</button>
                 </form>
             </section>
 
-            <section class="results-container">
-                <div id="loader" class="hidden">
-                    <div class="spinner"></div>
-                    <p>Suche die günstigsten Flüge...</p>
-                </div>
-                <div id="results" class="results-grid">
-                    <!-- Results will be injected here -->
-                </div>
+            <div id="loader" class="hidden">
+                <div class="spinner"></div>
+                <p>Kombiniere und suche nach besten Flügen... (Das kann kurz dauern)</p>
+            </div>
+
+            <section id="results" class="results-container">
+                <!-- Results will be injected here -->
             </section>
         </main>
     </div>
+
     <script src="app.js"></script>
 </body>
 </html>

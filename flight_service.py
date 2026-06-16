@@ -1,59 +1,102 @@
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
+import json
+import random
 
 # SERPAPI GOOGLE FLIGHTS API
 API_KEY = "b8c69aab0426c2ad85e2cd5a37f3e20ce8ac362a0777a030a3bc460207130ab2"
 API_URL = "https://serpapi.com/search.json"
 
-def search_flights(origin, destination, date_from, date_to=None, return_from=None, return_to=None):
-    # Hilfsfunktion für Datumskonvertierung von DD/MM/YYYY zu YYYY-MM-DD
-    def to_iso(d):
-        if not d: return None
-        parts = d.split('/')
-        if len(parts) == 3:
-            return f"{parts[2]}-{parts[1]}-{parts[0]}"
-        return d
+def smart_search(earliest_start, latest_return, start_airport, end_airport, destinations):
+    # Parse dates
+    earliest = datetime.strptime(earliest_start, "%Y-%m-%d")
+    latest = datetime.strptime(latest_return, "%Y-%m-%d")
+
+    route_airports = [start_airport] + [d["airport"] for d in destinations]
+    if end_airport:
+        route_airports.append(end_airport)
         
-    outbound = to_iso(date_from)
+    num_flights = len(route_airports) - 1
     
-    params = {
-        "engine": "google_flights",
-        "api_key": API_KEY,
-        "departure_id": origin,
-        "arrival_id": destination,
-        "outbound_date": outbound,
-        "currency": "EUR",
-        "hl": "de"
-    }
+    min_stays = [int(d["min_days"]) for d in destinations]
+    max_stays = [int(d["max_days"]) for d in destinations]
+    
+    if not end_airport and min_stays:
+        min_stays.pop()
+        max_stays.pop()
 
-    if return_from:
-        params["return_date"] = to_iso(return_from)
-        params["type"] = "1" # Hin- und Rückflug
-    else:
-        params["type"] = "2" # Nur Hinflug
-
-    response = requests.get(API_URL, params=params)
-    response.raise_for_status()
-    data = response.json()
-    
-    valid_flights = []
-    # SerpApi teilt die Flüge in "Best" und "Other" auf
-    flights_list = data.get("best_flights", []) + data.get("other_flights", [])
-    
-    for flight in flights_list:
-        if is_flight_valid(flight):
-            deep_link = data.get("search_metadata", {}).get("google_flights_url", "https://www.google.com/flights")
-            valid_flights.append(format_flight(flight, deep_link))
+    # Generate combinations
+    results = []
+    def backtrack(idx, current_date, combo):
+        if idx == len(min_stays):
+            if current_date <= latest:
+                results.append(combo)
+            return
             
-    # Nach Preis sortieren
-    valid_flights.sort(key=lambda x: x["price"] if x["price"] else float('inf'))
-    return valid_flights
+        for days in range(min_stays[idx], max_stays[idx] + 1):
+            next_date = current_date + timedelta(days=days)
+            if next_date <= latest:
+                backtrack(idx + 1, next_date, combo + (next_date,))
+
+    max_d0 = latest - timedelta(days=sum(min_stays))
+    d0 = earliest
+    while d0 <= max_d0:
+        backtrack(0, d0, (d0,))
+        d0 += timedelta(days=1)
+
+    # Prioritize and limit to 10
+    def score(combo):
+        # Penalize weekends (Friday=4, Saturday=5, Sunday=6)
+        return sum(1 for d in combo if d.weekday() >= 4)
+        
+    random.shuffle(results) # Shuffle first to avoid always picking the earliest dates
+    results.sort(key=score)
+    top_combos = results[:10]
+
+    all_flights = []
+    
+    for combo in top_combos:
+        multi_city = []
+        for i in range(num_flights):
+            multi_city.append({
+                "departure_id": route_airports[i],
+                "arrival_id": route_airports[i+1],
+                "date": combo[i].strftime("%Y-%m-%d")
+            })
+            
+        params = {
+            "engine": "google_flights",
+            "api_key": API_KEY,
+            "multi_city_json": json.dumps(multi_city),
+            "currency": "EUR",
+            "hl": "de"
+        }
+        
+        try:
+            res = requests.get(API_URL, params=params)
+            res.raise_for_status()
+            data = res.json()
+            
+            flights_list = data.get("best_flights", []) + data.get("other_flights", [])
+            for flight in flights_list:
+                if is_flight_valid(flight):
+                    deep_link = data.get("search_metadata", {}).get("google_flights_url", "https://www.google.com/flights")
+                    formatted = format_flight(flight, deep_link, multi_city)
+                    if formatted:
+                        all_flights.append(formatted)
+        except Exception as e:
+            print(f"Error fetching combo {combo}: {e}")
+
+    # Sort by price
+    all_flights.sort(key=lambda x: x["price"] if x["price"] else float('inf'))
+    
+    # Return top 20 to avoid overwhelming UI
+    return all_flights[:20]
+
 
 def is_flight_valid(flight):
-    """
-    Prüft ob die Layovers unter 4 Stunden (240 Minuten) liegen.
-    """
+    # Layover < 4 hours filter
     layovers = flight.get("layovers", [])
     for layover in layovers:
         duration = layover.get("duration", 0)
@@ -61,33 +104,45 @@ def is_flight_valid(flight):
             return False
     return True
 
-def format_flight(flight, deep_link):
+def format_flight(flight, deep_link, request_combo):
     flights_segments = flight.get("flights", [])
-    
+    if not flights_segments:
+        return None
+        
     departure = ""
     arrival = ""
     route = []
     
-    if flights_segments:
+    try:
         dep_info = flights_segments[0].get("departure_airport", {})
-        departure = dep_info.get("time", "")
-        
+        dep_dt = datetime.strptime(dep_info.get("time", ""), "%Y-%m-%d %H:%M")
+        departure = dep_dt.strftime("%d.%m.%Y %H:%M")
+    except:
+        departure = flights_segments[0].get("departure_airport", {}).get("time", "")
+
+    try:
         arr_info = flights_segments[-1].get("arrival_airport", {})
-        arrival = arr_info.get("time", "")
+        arr_dt = datetime.strptime(arr_info.get("time", ""), "%Y-%m-%d %H:%M")
+        arrival = arr_dt.strftime("%d.%m.%Y %H:%M")
+    except:
+        arrival = flights_segments[-1].get("arrival_airport", {}).get("time", "")
         
-        for seg in flights_segments:
-            dep_id = seg.get("departure_airport", {}).get("id", "Unbekannt")
-            arr_id = seg.get("arrival_airport", {}).get("id", "Unbekannt")
-            airline = seg.get("airline", "Unbekannt")
-            route.append(f"{dep_id} -> {arr_id} ({airline})")
-            
+    for seg in flights_segments:
+        dep_id = seg.get("departure_airport", {}).get("id", "Unbekannt")
+        arr_id = seg.get("arrival_airport", {}).get("id", "Unbekannt")
+        airline = seg.get("airline", "Unbekannt")
+        route.append(f"{dep_id} -> {arr_id} ({airline})")
+        
     total_minutes = flight.get("total_duration", 0)
     h = total_minutes // 60
     m = total_minutes % 60
     duration_str = f"{h}h {m}m"
 
+    # Add context of the chosen dates
+    date_summary = " | ".join([f"{c['departure_id']}->{c['arrival_id']} am {datetime.strptime(c['date'], '%Y-%m-%d').strftime('%d.%m.')}" for c in request_combo])
+
     return {
-        "id": flight.get("flight_ticket", "google-flight"),
+        "id": flight.get("flight_ticket", "google-flight") + str(random.randint(1,10000)),
         "price": flight.get("price", 0),
         "currency": "EUR",
         "deep_link": deep_link,
@@ -95,5 +150,6 @@ def format_flight(flight, deep_link):
         "departure": departure,
         "arrival": arrival,
         "route": route,
-        "layovers": len(flight.get("layovers", []))
+        "layovers": len(flight.get("layovers", [])),
+        "date_summary": date_summary
     }
