@@ -263,47 +263,51 @@ document.addEventListener('DOMContentLoaded', () => {
             loader.classList.add('hidden');
             comboView.classList.remove('hidden'); // Show combos again so they can pick others if they want
 
-            if (data.status === 'success' && data.data.length > 0) {
-                resultsContainer.innerHTML = '<h2 style="margin-bottom: 1rem;">Gefundene Flüge</h2>';
-                data.data.forEach(flight => {
-                    const card = document.createElement('div');
-                    card.className = 'flight-card glass';
-                    
-                    let layoversHtml = '';
-                    if (flight.layovers > 0) {
-                        layoversHtml = `<div class="flight-detail"><strong>Layovers:</strong> ${flight.layovers}</div>`;
-                    } else {
-                        layoversHtml = `<div class="flight-detail" style="color: #4ade80;"><strong>Direktflüge!</strong></div>`;
-                    }
+            if (data.status === 'success') {
+                if (data.data.length > 0) {
+                    resultsContainer.innerHTML = '<h2 style="margin-bottom: 1rem;">Gefundene Flüge</h2>';
+                    data.data.forEach(flight => {
+                        const card = document.createElement('div');
+                        card.className = 'flight-card glass';
+                        
+                        let layoversHtml = '';
+                        if (flight.layovers > 0) {
+                            layoversHtml = `<div class="flight-detail"><strong>Layovers:</strong> ${flight.layovers}</div>`;
+                        } else {
+                            layoversHtml = `<div class="flight-detail" style="color: #4ade80;"><strong>Direktflüge!</strong></div>`;
+                        }
 
-                    const routeHtml = flight.route.map((r, i) => `<div>Leg ${i+1}: ${r}</div>`).join('');
+                        const routeHtml = flight.route.map((r, i) => `<div>Leg ${i+1}: ${r}</div>`).join('');
 
-                    card.innerHTML = `
-                        <div class="flight-header">
-                            <div class="flight-price">${flight.price} ${flight.currency}</div>
-                            <a href="${flight.deep_link}" target="_blank" class="book-btn">Prüfen</a>
-                        </div>
-                        <div style="color:var(--primary-color); margin-bottom:1rem; font-weight:600; font-size:0.9rem;">
-                            ${flight.date_summary}
-                        </div>
-                        <div class="flight-details">
-                            <div class="flight-detail">
-                                <strong>Start:</strong> ${flight.departure}
+                        card.innerHTML = `
+                            <div class="flight-header">
+                                <div class="flight-price">${flight.price} ${flight.currency}</div>
+                                <a href="${flight.deep_link}" target="_blank" class="book-btn">Prüfen</a>
                             </div>
-                            <div class="flight-detail">
-                                <strong>Ende:</strong> ${flight.arrival}
+                            <div style="color:var(--primary-color); margin-bottom:1rem; font-weight:600; font-size:0.9rem;">
+                                ${flight.date_summary}
                             </div>
-                            <div class="flight-detail">
-                                <strong>Route:</strong>
-                                ${routeHtml}
+                            <div class="flight-details">
+                                <div class="flight-detail">
+                                    <strong>Start:</strong> ${flight.departure}
+                                </div>
+                                <div class="flight-detail">
+                                    <strong>Ende:</strong> ${flight.arrival}
+                                </div>
+                                <div class="flight-detail">
+                                    <strong>Route:</strong>
+                                    ${routeHtml}
+                                </div>
+                                ${layoversHtml}
                             </div>
-                            ${layoversHtml}
-                        </div>
-                    `;
-                    resultsContainer.appendChild(card);
-                });
+                        `;
+                        resultsContainer.appendChild(card);
+                    });
+                } else {
+                    resultsContainer.innerHTML = '<p style="text-align: center;">Für diese Auswahl wurden keine Flüge gefunden (oder sie verstoßen gegen dein Layover Limit).</p>';
+                }
             } else {
-                resultsContainer.innerHTML = '<p style="text-align: center;">Für diese Auswahl wurden keine Flüge gefunden (oder sie verstoßen gegen den 4h Layover Filter).</p>';
+                resultsContainer.innerHTML = `<p style="text-align: center; color: #ef4444;">Fehler vom Server: ${data.message}</p>`;
             }
         } catch (error) {
             console.error(error);

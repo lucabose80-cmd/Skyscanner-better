@@ -76,6 +76,7 @@ def generate_combos(earliest_start, latest_return, start_airport, end_airport, d
 
 def fetch_flights(selected_combos, max_layover=240):
     all_flights = []
+    errors = []
     
     for combo_data in selected_combos:
         multi_city = combo_data.get("multi_city", [])
@@ -95,6 +96,10 @@ def fetch_flights(selected_combos, max_layover=240):
             res.raise_for_status()
             data = res.json()
             
+            if "error" in data:
+                errors.append(f"SerpApi Error: {data['error']}")
+                continue
+                
             flights_list = data.get("best_flights", []) + data.get("other_flights", [])
             for flight in flights_list:
                 if is_flight_valid(flight, max_layover):
@@ -103,9 +108,18 @@ def fetch_flights(selected_combos, max_layover=240):
                     if formatted:
                         all_flights.append(formatted)
         except Exception as e:
-            print(f"Error fetching combo: {e}")
+            err_str = str(e)
+            if hasattr(e, 'response') and e.response is not None:
+                err_str += " | Response: " + e.response.text
+            print(f"Error fetching combo: {err_str}")
+            errors.append(err_str)
 
     all_flights.sort(key=lambda x: x["price"] if x["price"] else float('inf'))
+    
+    # Pack errors into the result if no flights found to help debugging
+    if not all_flights and errors:
+        raise Exception("API Fehler aufgetreten: " + " | ".join(errors[:3]))
+        
     return all_flights[:20]
 
 
