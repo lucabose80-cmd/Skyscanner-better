@@ -49,8 +49,17 @@
                         <div id="end-suggestions" class="suggestions-box hidden"></div>
                     </div>
 
-                    <button type="submit" class="submit-btn" style="margin-top: 1.5rem;">Beste Tage finden</button>
+                    <button type="submit" class="submit-btn" style="margin-top: 1.5rem;">Mögliche Kombinationen berechnen</button>
                 </form>
+            </section>
+
+            <section id="combo-view" class="hidden glass" style="padding: 1.5rem; margin-top: 1rem;">
+                <h2>📅 Wähle deine Reise-Tage</h2>
+                <p style="margin-bottom: 1rem; color: #cbd5e1;">Wähle bis zu 10 Datums-Kombinationen aus, die wir für dich bei Google Flights prüfen sollen.</p>
+                <div id="combo-list">
+                    <!-- Combos will be injected here -->
+                </div>
+                <button id="fetch-flights-btn" class="submit-btn" style="margin-top: 1rem;" disabled>Preise für Auswahl prüfen (<span id="combo-count">0</span>/10)</button>
             </section>
 
             <div id="loader" class="hidden">

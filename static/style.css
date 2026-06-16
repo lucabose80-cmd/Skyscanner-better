@@ -288,3 +288,38 @@ input:focus {
     padding: 4px 8px;
     font-size: 0.8rem;
 }
+
+/* Combo View Styles */
+.combo-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.combo-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.combo-item.selected {
+    border-color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.1);
+}
+.combo-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+.recommended-badge {
+    background: #fbbf24;
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 10px;
+}

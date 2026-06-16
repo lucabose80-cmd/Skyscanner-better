@@ -6,6 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const addDestBtn = document.getElementById('add-dest-btn');
     const resultsContainer = document.getElementById('results');
     const loader = document.getElementById('loader');
+    
+    const comboView = document.getElementById('combo-view');
+    const comboList = document.getElementById('combo-list');
+    const fetchFlightsBtn = document.getElementById('fetch-flights-btn');
+    const comboCountSpan = document.getElementById('combo-count');
+
+    let generatedCombosData = [];
+    let selectedCombos = [];
 
     // Autocomplete Logic
     function setupAutocomplete(inputElement, suggestionsElement) {
@@ -113,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Gather data
         const earliest_start = earliestStartInput.value;
         const latest_return = latestReturnInput.value;
         const start_airport = document.getElementById('start_airport').value;
@@ -139,9 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsContainer.innerHTML = '';
         form.style.display = 'none';
         loader.classList.remove('hidden');
+        loader.querySelector('p').innerText = "Berechne Kombinationsmöglichkeiten...";
 
         try {
-            const response = await fetch('/api/smart-search', {
+            const response = await fetch('/api/generate-combos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestData)
@@ -149,9 +157,99 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             loader.classList.add('hidden');
-            form.style.display = 'block';
 
             if (data.status === 'success' && data.data.length > 0) {
+                generatedCombosData = data.data;
+                renderCombos();
+                comboView.classList.remove('hidden');
+            } else {
+                form.style.display = 'block';
+                resultsContainer.innerHTML = '<p style="text-align: center;">Keine mathematisch gültigen Kombinationen in diesem Zeitraum gefunden.</p>';
+            }
+        } catch (error) {
+            console.error(error);
+            loader.classList.add('hidden');
+            form.style.display = 'block';
+            resultsContainer.innerHTML = '<p style="text-align: center; color: #ef4444;">Fehler bei der Kombinationengenerierung.</p>';
+        }
+    });
+
+    function renderCombos() {
+        comboList.innerHTML = '';
+        selectedCombos = [];
+        updateFetchButton();
+
+        generatedCombosData.forEach(combo => {
+            const div = document.createElement('div');
+            div.className = 'combo-item';
+            
+            const badge = combo.recommended ? '<span class="recommended-badge">⭐ Empfohlen</span>' : '';
+            
+            div.innerHTML = `
+                <input type="checkbox" class="combo-checkbox" value="${combo.combo_id}" id="${combo.combo_id}">
+                <label for="${combo.combo_id}" style="cursor:pointer; width:100%; font-weight:500;">
+                    ${combo.route_summary}
+                    ${badge}
+                </label>
+            `;
+
+            const checkbox = div.querySelector('.combo-checkbox');
+            
+            // Allow clicking the whole div
+            div.addEventListener('click', (e) => {
+                if (e.target !== checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            });
+
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    if (selectedCombos.length >= 10) {
+                        checkbox.checked = false;
+                        alert("Du kannst maximal 10 Kombinationen gleichzeitig abfragen!");
+                        return;
+                    }
+                    selectedCombos.push(combo);
+                    div.classList.add('selected');
+                } else {
+                    selectedCombos = selectedCombos.filter(c => c.combo_id !== combo.combo_id);
+                    div.classList.remove('selected');
+                }
+                updateFetchButton();
+            });
+
+            comboList.appendChild(div);
+        });
+    }
+
+    function updateFetchButton() {
+        comboCountSpan.innerText = selectedCombos.length;
+        if (selectedCombos.length > 0) {
+            fetchFlightsBtn.disabled = false;
+        } else {
+            fetchFlightsBtn.disabled = true;
+        }
+    }
+
+    fetchFlightsBtn.addEventListener('click', async () => {
+        comboView.classList.add('hidden');
+        loader.classList.remove('hidden');
+        loader.querySelector('p').innerText = "Frage reale Preise bei Google Flights ab... (Das kann kurz dauern)";
+
+        try {
+            const response = await fetch('/api/fetch-flights', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ selected_combos: selectedCombos })
+            });
+            const data = await response.json();
+            
+            loader.classList.add('hidden');
+            comboView.classList.remove('hidden'); // Show combos again so they can pick others if they want
+
+            if (data.status === 'success' && data.data.length > 0) {
+                resultsContainer.innerHTML = '<h2 style="margin-bottom: 1rem;">Gefundene Flüge</h2>';
                 data.data.forEach(flight => {
                     const card = document.createElement('div');
                     card.className = 'flight-card glass';
@@ -190,13 +288,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     resultsContainer.appendChild(card);
                 });
             } else {
-                resultsContainer.innerHTML = '<p style="text-align: center;">Keine guten Kombinationen mit passenden Kriterien gefunden.</p>';
+                resultsContainer.innerHTML = '<p style="text-align: center;">Für diese Auswahl wurden keine Flüge gefunden (oder sie verstoßen gegen den 4h Layover Filter).</p>';
             }
         } catch (error) {
             console.error(error);
             loader.classList.add('hidden');
-            form.style.display = 'block';
-            resultsContainer.innerHTML = '<p style="text-align: center; color: #ef4444;">Fehler bei der Suche.</p>';
+            comboView.classList.remove('hidden');
+            resultsContainer.innerHTML = '<p style="text-align: center; color: #ef4444;">Fehler bei der Flugsuche.</p>';
         }
     });
+
 });

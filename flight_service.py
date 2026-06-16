@@ -8,8 +8,7 @@ import random
 API_KEY = "b8c69aab0426c2ad85e2cd5a37f3e20ce8ac362a0777a030a3bc460207130ab2"
 API_URL = "https://serpapi.com/search.json"
 
-def smart_search(earliest_start, latest_return, start_airport, end_airport, destinations):
-    # Parse dates
+def generate_combos(earliest_start, latest_return, start_airport, end_airport, destinations):
     earliest = datetime.strptime(earliest_start, "%Y-%m-%d")
     latest = datetime.strptime(latest_return, "%Y-%m-%d")
 
@@ -26,7 +25,6 @@ def smart_search(earliest_start, latest_return, start_airport, end_airport, dest
         min_stays.pop()
         max_stays.pop()
 
-    # Generate combinations
     results = []
     def backtrack(idx, current_date, combo):
         if idx == len(min_stays):
@@ -39,31 +37,50 @@ def smart_search(earliest_start, latest_return, start_airport, end_airport, dest
             if next_date <= latest:
                 backtrack(idx + 1, next_date, combo + (next_date,))
 
-    max_d0 = latest - timedelta(days=sum(min_stays))
+    max_d0 = latest - timedelta(days=sum(min_stays)) if min_stays else latest
     d0 = earliest
     while d0 <= max_d0:
         backtrack(0, d0, (d0,))
         d0 += timedelta(days=1)
 
-    # Prioritize and limit to 10
     def score(combo):
-        # Penalize weekends (Friday=4, Saturday=5, Sunday=6)
+        # lower score is better (weekend flights are penalized)
         return sum(1 for d in combo if d.weekday() >= 4)
         
-    random.shuffle(results) # Shuffle first to avoid always picking the earliest dates
+    random.shuffle(results)
     results.sort(key=score)
-    top_combos = results[:10]
 
-    all_flights = []
-    
-    for combo in top_combos:
+    output = []
+    for idx, combo in enumerate(results):
         multi_city = []
+        route_strings = []
         for i in range(num_flights):
             multi_city.append({
                 "departure_id": route_airports[i],
                 "arrival_id": route_airports[i+1],
                 "date": combo[i].strftime("%Y-%m-%d")
             })
+            route_strings.append(f"{route_airports[i]} ➡️ {route_airports[i+1]} ({combo[i].strftime('%d.%m.')})")
+            
+        is_recommended = idx < 10
+        output.append({
+            "combo_id": f"combo_{idx}",
+            "multi_city": multi_city,
+            "route_summary": " | ".join(route_strings),
+            "score": score(combo),
+            "recommended": is_recommended
+        })
+        
+    return output
+
+
+def fetch_flights(selected_combos):
+    all_flights = []
+    
+    for combo_data in selected_combos:
+        multi_city = combo_data.get("multi_city", [])
+        if not multi_city:
+            continue
             
         params = {
             "engine": "google_flights",
@@ -86,17 +103,13 @@ def smart_search(earliest_start, latest_return, start_airport, end_airport, dest
                     if formatted:
                         all_flights.append(formatted)
         except Exception as e:
-            print(f"Error fetching combo {combo}: {e}")
+            print(f"Error fetching combo: {e}")
 
-    # Sort by price
     all_flights.sort(key=lambda x: x["price"] if x["price"] else float('inf'))
-    
-    # Return top 20 to avoid overwhelming UI
     return all_flights[:20]
 
 
 def is_flight_valid(flight):
-    # Layover < 4 hours filter
     layovers = flight.get("layovers", [])
     for layover in layovers:
         duration = layover.get("duration", 0)
@@ -138,7 +151,6 @@ def format_flight(flight, deep_link, request_combo):
     m = total_minutes % 60
     duration_str = f"{h}h {m}m"
 
-    # Add context of the chosen dates
     date_summary = " | ".join([f"{c['departure_id']}->{c['arrival_id']} am {datetime.strptime(c['date'], '%Y-%m-%d').strftime('%d.%m.')}" for c in request_combo])
 
     return {
