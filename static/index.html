@@ -49,6 +49,16 @@
                         <div id="end-suggestions" class="suggestions-box hidden"></div>
                     </div>
 
+                    <div class="form-group" style="position: relative; margin-top: 1rem;">
+                        <label for="max_layover">Maximal erlaubte Umsteigezeit pro Layover</label>
+                        <select id="max_layover" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0, 0, 0, 0.5); color: #f8fafc;">
+                            <option value="240">4 Stunden (Standard)</option>
+                            <option value="480">8 Stunden</option>
+                            <option value="720">12 Stunden</option>
+                            <option value="1440">Beliebig (Max 24h)</option>
+                        </select>
+                    </div>
+
                     <button type="submit" class="submit-btn" style="margin-top: 1.5rem;">Mögliche Kombinationen berechnen</button>
                 </form>
             </section>

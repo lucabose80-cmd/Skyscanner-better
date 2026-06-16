@@ -74,7 +74,7 @@ def generate_combos(earliest_start, latest_return, start_airport, end_airport, d
     return output
 
 
-def fetch_flights(selected_combos):
+def fetch_flights(selected_combos, max_layover=240):
     all_flights = []
     
     for combo_data in selected_combos:
@@ -97,7 +97,7 @@ def fetch_flights(selected_combos):
             
             flights_list = data.get("best_flights", []) + data.get("other_flights", [])
             for flight in flights_list:
-                if is_flight_valid(flight):
+                if is_flight_valid(flight, max_layover):
                     deep_link = data.get("search_metadata", {}).get("google_flights_url", "https://www.google.com/flights")
                     formatted = format_flight(flight, deep_link, multi_city)
                     if formatted:
@@ -109,11 +109,11 @@ def fetch_flights(selected_combos):
     return all_flights[:20]
 
 
-def is_flight_valid(flight):
+def is_flight_valid(flight, max_layover):
     layovers = flight.get("layovers", [])
     for layover in layovers:
         duration = layover.get("duration", 0)
-        if duration >= 240:
+        if duration > max_layover:
             return False
     return True
 

@@ -31,8 +31,9 @@ async def fetch_flights_endpoint(request: Request):
     try:
         data = await request.json()
         selected_combos = data.get("selected_combos", [])
+        max_layover = data.get("max_layover", 240)
         
-        results = flight_service.fetch_flights(selected_combos)
+        results = flight_service.fetch_flights(selected_combos, max_layover)
         return JSONResponse(content={"status": "success", "data": results})
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)

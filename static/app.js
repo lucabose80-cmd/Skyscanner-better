@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             timeout = setTimeout(async () => {
                 try {
-                    const res = await fetch(`https://autocomplete.travelpayouts.com/places2?term=${query}&locale=de&types[]=airport`);
+                    const res = await fetch(`https://autocomplete.travelpayouts.com/places2?term=${query}&locale=de&types[]=city&types[]=airport`);
                     const data = await res.json();
                     
                     if (data.length > 0) {
@@ -250,11 +250,13 @@ document.addEventListener('DOMContentLoaded', () => {
         loader.classList.remove('hidden');
         loader.querySelector('p').innerText = "Frage reale Preise bei Google Flights ab... (Das kann kurz dauern)";
 
+        const maxLayover = parseInt(document.getElementById('max_layover').value);
+
         try {
             const response = await fetch('/api/fetch-flights', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ selected_combos: selectedCombos })
+                body: JSON.stringify({ selected_combos: selectedCombos, max_layover: maxLayover })
             });
             const data = await response.json();
             
