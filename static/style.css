@@ -1,214 +1,175 @@
 :root {
-    --bg-color: #0f172a;
-    --text-color: #f8fafc;
-    --primary-color: #3b82f6;
-    --primary-hover: #2563eb;
-    --card-bg: rgba(30, 41, 59, 0.7);
-    --border-color: rgba(255, 255, 255, 0.1);
+    --primary-color: #0770e3;
+    --primary-hover: #0556b3;
+    --bg-color: #f0f3f5;
+    --card-bg: #ffffff;
+    --text-color: #111236;
+    --text-muted: #68697f;
+    --border-color: #c2c9d1;
+    --shadow: 0 4px 14px 0 rgba(37,32,31,.25);
+    --success: #00a698;
+    --danger: #d92525;
 }
 
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    min-height: 100vh;
-    background-image: radial-gradient(circle at top right, #1e3a8a, transparent 40%),
-                      radial-gradient(circle at bottom left, #312e81, transparent 40%);
+    line-height: 1.6;
 }
 
-.app-container {
-    max-width: 900px;
+.container {
+    max-width: 1000px;
     margin: 0 auto;
     padding: 2rem;
 }
 
 header {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
 }
 
 header h1 {
-    font-size: 3rem;
-    font-weight: 600;
-    background: linear-gradient(to right, #60a5fa, #a78bfa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 0.5rem;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+header h1 svg {
+    fill: var(--primary-color);
+    width: 36px;
+    height: 36px;
 }
 
-.glass {
+header p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+}
+
+/* Form Styles */
+.search-box {
     background: var(--card-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
 }
 
-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
 }
 
 .form-group {
-    display: flex;
-    flex-direction: column;
+    flex: 1;
+    min-width: 200px;
+    position: relative;
 }
 
 .form-group label {
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-    color: #cbd5e1;
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-color);
 }
 
-input[type="text"], input[type="date"] {
-    background: rgba(15, 23, 42, 0.6);
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+    width: 100%;
+    padding: 0.7rem 1rem;
     border: 1px solid var(--border-color);
-    color: white;
-    padding: 0.8rem 1rem;
-    border-radius: 8px;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: var(--text-color);
+    background-color: #fff;
+    transition: all 0.2s;
     font-family: inherit;
-    transition: all 0.3s ease;
 }
 
-input:focus {
+input:focus, select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 0 2px rgba(7, 112, 227, 0.2);
 }
 
-.checkbox-group {
-    grid-column: span 2;
+.submit-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s;
     display: flex;
+    justify-content: center;
     align-items: center;
     gap: 0.5rem;
 }
 
-.checkbox-group label {
-    cursor: pointer;
-}
-
-#return-dates {
-    grid-column: span 2;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.hidden {
-    display: none !important;
-}
-
-.primary-btn {
-    grid-column: span 2;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 1rem;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.2s ease;
-}
-
-.primary-btn:hover {
+.submit-btn:hover {
     background-color: var(--primary-hover);
-    transform: translateY(-2px);
 }
 
-.results-container {
-    margin-top: 3rem;
+.outline-btn {
+    background: transparent;
+    border: 1px dashed var(--primary-color);
+    color: var(--primary-color);
+    padding: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-bottom: 1rem;
+}
+.outline-btn:hover {
+    background: rgba(7, 112, 227, 0.05);
 }
 
-.results-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-}
-
-.flight-card {
-    background: var(--card-bg);
+/* Destination Rows */
+.destination-row {
+    background: #f8f9fa;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
 }
-
-.flight-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.flight-info h3 {
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
-}
-
-.flight-info p {
-    color: #94a3b8;
+.destination-row h4 {
+    margin-bottom: 0.8rem;
     font-size: 0.9rem;
-    margin-bottom: 0.2rem;
+    color: var(--text-muted);
 }
-
-.flight-price {
-    text-align: right;
-}
-
-.flight-price .amount {
-    font-size: 2rem;
+.remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    color: var(--danger);
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #4ade80;
-    display: block;
-    margin-bottom: 0.5rem;
 }
-
-.book-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    text-decoration: none;
-    padding: 0.5rem 1.5rem;
-    border-radius: 6px;
-    font-weight: 600;
-    transition: background 0.2s;
-    display: inline-block;
-}
-
-.book-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-/* Spinner */
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(255,255,255,0.1);
-    border-top-color: var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 1rem auto;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-#loader {
-    text-align: center;
-    padding: 2rem;
+.remove-btn:hover {
+    text-decoration: underline;
 }
 
 /* Autocomplete Suggestions */
@@ -219,19 +180,17 @@ input:focus {
     right: 0;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    margin-top: 4px;
-    max-height: 200px;
+    border-radius: 0 0 4px 4px;
+    max-height: 250px;
     overflow-y: auto;
     z-index: 10;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
+
 .suggestion-item {
     padding: 0.8rem 1rem;
     cursor: pointer;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid #f0f3f5;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -240,86 +199,154 @@ input:focus {
     border-bottom: none;
 }
 .suggestion-item:hover {
-    background: rgba(59, 130, 246, 0.2);
+    background: #f1f6fd;
 }
 .suggestion-name {
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
-.suggestion-code {
-    color: #94a3b8;
-    font-size: 0.85rem;
-    background: rgba(255,255,255,0.1);
+.suggestion-type {
+    font-size: 0.7rem;
+    background: #e2e8f0;
     padding: 2px 6px;
     border-radius: 4px;
+    color: #475569;
+}
+.suggestion-code {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
-.outline-btn {
-    background: transparent;
-    border: 1px dashed var(--primary-color);
-    color: var(--primary-color);
-    padding: 0.8rem;
+/* Utility */
+.hidden {
+    display: none !important;
+}
+
+/* Loader */
+#loader {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+.spinner {
+    border: 4px solid rgba(0,0,0,0.1);
+    border-left-color: var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem auto;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Results */
+.results-container {
+    margin-top: 2rem;
+}
+
+.combo-card {
+    background: var(--card-bg);
     border-radius: 8px;
-    cursor: pointer;
-    width: 100%;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px 0 rgba(37,32,31,.3);
+    margin-bottom: 1rem;
+    transition: box-shadow 0.2s;
 }
-.outline-btn:hover {
-    background: rgba(59, 130, 246, 0.1);
+.combo-card:hover {
+    box-shadow: var(--shadow);
 }
-.destination-row {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 1rem;
-    margin-top: 1rem;
+.combo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #f0f3f5;
+    padding-bottom: 0.5rem;
+}
+.combo-header h3 {
+    color: var(--text-color);
+    font-size: 1.1rem;
+}
+.recommended-badge {
+    background: #e0f2f1;
+    color: var(--success);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.route-step {
+    display: flex;
+    align-items: flex-start;
     margin-bottom: 1rem;
     position: relative;
 }
-.remove-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    padding: 4px 8px;
-    font-size: 0.8rem;
+.route-step:last-child {
+    margin-bottom: 0;
 }
-
-/* Combo View Styles */
-.combo-item {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 0.8rem;
+.route-icon {
+    width: 24px;
+    height: 24px;
+    background: #e1e9f4;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
+    justify-content: center;
+    color: var(--primary-color);
+    margin-right: 1rem;
+    flex-shrink: 0;
+    font-size: 0.8rem;
 }
-.combo-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+.route-line {
+    position: absolute;
+    left: 11px;
+    top: 24px;
+    bottom: -1rem;
+    width: 2px;
+    background: #e1e9f4;
 }
-.combo-item.selected {
-    border-color: var(--primary-color);
-    background: rgba(59, 130, 246, 0.1);
+.route-step:last-child .route-line {
+    display: none;
 }
-.combo-checkbox {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
+.route-info {
+    flex: 1;
 }
-.recommended-badge {
-    background: #fbbf24;
-    color: #000;
-    font-size: 0.7rem;
+.route-airports {
     font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+}
+.route-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.weekend-warning {
+    color: var(--danger);
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #fee2e2;
     padding: 2px 6px;
     border-radius: 4px;
-    margin-left: 10px;
+}
+.stay-info {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    background: #e6f0ff;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-top: 0.4rem;
 }

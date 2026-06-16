@@ -1,11 +1,10 @@
-import os
-from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse
 import flight_service
+from pathlib import Path
 
-app = FastAPI(title="Flight Tracker API")
+app = FastAPI()
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -26,16 +25,8 @@ async def generate_combos_endpoint(request: Request):
     except Exception as e:
         return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
 
-@app.post("/api/fetch-flights")
-async def fetch_flights_endpoint(request: Request):
-    try:
-        data = await request.json()
-        selected_combos = data.get("selected_combos", [])
-        max_layover = data.get("max_layover", 240)
-        
-        results = flight_service.fetch_flights(selected_combos, max_layover)
-        return JSONResponse(content={"status": "success", "data": results})
-    except Exception as e:
-        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
-
 app.mount("/", StaticFiles(directory=str(BASE_DIR / "static"), html=True), name="static")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

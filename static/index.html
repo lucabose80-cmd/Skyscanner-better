@@ -3,37 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skyscanner Better - Smart Flight Tracker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=2">
+    <title>Skyscanner Datums-Rechner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
-    <div class="background-animation"></div>
-    
     <div class="container">
         <header>
-            <h1>✈️ Skyscanner <span class="highlight">Better</span></h1>
-            <p>Finde die besten Flugtage ohne ewig zu suchen.</p>
+            <h1>
+                <svg viewBox="0 0 24 24"><path d="M19.46 7.42l-4.24-2.83L11.5 1l-1.42.71 1.42 4.24-4.24 2.83-2.83-1.42L3 8.08l4.24 2.83L3 15.15 4.41 16.57l4.24-4.24 2.83 4.24.71 1.42 1.41-4.24 2.83-4.24 4.24-1.42.71-1.41-1.42-2.09zM21 17h-2v-2h-2v2h-2v2h2v2h2v-2h2v-2z"/></svg>
+                Skyscanner <span style="color:var(--text-color);">Datums-Rechner</span>
+            </h1>
+            <p>Finde mathematisch die besten Flugtage für deinen Gabelflug.</p>
         </header>
 
         <main>
-            <section class="search-box glass">
+            <section class="search-box">
                 <form id="search-form">
                     
-                    <div style="display:flex; gap:1rem;">
-                        <div class="form-group" style="flex:1">
+                    <div class="form-row">
+                        <div class="form-group">
                             <label for="earliest_start">Frühester Abflug</label>
                             <input type="date" id="earliest_start" required>
                         </div>
-                        <div class="form-group" style="flex:1">
+                        <div class="form-group">
                             <label for="latest_return">Spätester Rückflug / Ende</label>
                             <input type="date" id="latest_return" required>
                         </div>
                     </div>
 
-                    <div class="form-group" style="position: relative;">
+                    <div class="form-group" style="margin-bottom: 1rem;">
                         <label for="start_airport">Startflughafen</label>
-                        <input type="text" id="start_airport" placeholder="z.B. FRA" autocomplete="off" required>
+                        <input type="text" id="start_airport" placeholder="z.B. Frankfurt" autocomplete="off" required>
                         <div id="start-suggestions" class="suggestions-box hidden"></div>
                     </div>
 
@@ -43,38 +44,21 @@
 
                     <button type="button" id="add-dest-btn" class="outline-btn">+ Weiteres Ziel hinzufügen</button>
 
-                    <div class="form-group" style="position: relative; margin-top: 1rem;">
+                    <div class="form-group" style="margin-top: 1rem;">
                         <label for="end_airport">Endflughafen (Rückflug nach)</label>
-                        <input type="text" id="end_airport" placeholder="z.B. FRA (leer lassen für One-Way)" autocomplete="off">
+                        <input type="text" id="end_airport" placeholder="z.B. Frankfurt (leer lassen für One-Way)" autocomplete="off">
                         <div id="end-suggestions" class="suggestions-box hidden"></div>
                     </div>
 
-                    <div class="form-group" style="position: relative; margin-top: 1rem;">
-                        <label for="max_layover">Maximal erlaubte Umsteigezeit pro Layover</label>
-                        <select id="max_layover" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0, 0, 0, 0.5); color: #f8fafc;">
-                            <option value="240">4 Stunden (Standard)</option>
-                            <option value="480">8 Stunden</option>
-                            <option value="720">12 Stunden</option>
-                            <option value="1440">Beliebig (Max 24h)</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="submit-btn" style="margin-top: 1.5rem;">Mögliche Kombinationen berechnen</button>
+                    <button type="submit" class="submit-btn" style="margin-top: 1.5rem;">
+                        Beste Datums-Kombinationen berechnen
+                    </button>
                 </form>
-            </section>
-
-            <section id="combo-view" class="hidden glass" style="padding: 1.5rem; margin-top: 1rem;">
-                <h2>📅 Wähle deine Reise-Tage</h2>
-                <p style="margin-bottom: 1rem; color: #cbd5e1;">Wähle bis zu 10 Datums-Kombinationen aus, die wir für dich bei Google Flights prüfen sollen.</p>
-                <div id="combo-list">
-                    <!-- Combos will be injected here -->
-                </div>
-                <button id="fetch-flights-btn" class="submit-btn" style="margin-top: 1rem;" disabled>Preise für Auswahl prüfen (<span id="combo-count">0</span>/10)</button>
             </section>
 
             <div id="loader" class="hidden">
                 <div class="spinner"></div>
-                <p>Kombiniere und suche nach besten Flügen... (Das kann kurz dauern)</p>
+                <p>Kombiniere Millionen von Tagen...</p>
             </div>
 
             <section id="results" class="results-container">
@@ -83,6 +67,6 @@
         </main>
     </div>
 
-    <script src="app.js?v=2"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>
