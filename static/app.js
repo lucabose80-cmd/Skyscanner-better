@@ -19,6 +19,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupAutocomplete(inputElement, suggestionsElement) {
         let timeout = null;
 
+        // Bringe das aktuelle Feld in den Vordergrund, damit das Dropdown nicht hinter dem nächsten Feld verschwindet
+        inputElement.addEventListener('focus', () => {
+            const rowOrGroup = inputElement.closest('.destination-row') || inputElement.closest('.form-group');
+            if (rowOrGroup) rowOrGroup.style.zIndex = '50';
+        });
+
+        inputElement.addEventListener('blur', () => {
+            setTimeout(() => {
+                const rowOrGroup = inputElement.closest('.destination-row') || inputElement.closest('.form-group');
+                if (rowOrGroup) rowOrGroup.style.zIndex = '';
+            }, 200);
+        });
+
         inputElement.addEventListener('input', (e) => {
             clearTimeout(timeout);
             const query = e.target.value.trim();
