@@ -86,6 +86,7 @@ def fetch_flights(selected_combos, max_layover=240):
         params = {
             "engine": "google_flights",
             "api_key": API_KEY,
+            "type": "3",
             "multi_city_json": json.dumps(multi_city),
             "currency": "EUR",
             "hl": "de"
